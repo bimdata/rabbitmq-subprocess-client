@@ -11,7 +11,7 @@ README = (HERE / "README.md").read_text()
 
 # This call to setup() does all the work
 setup(
-    description="RabbitMQ-subprocess-client is a RabbitMq client (based on `pika`) spawning tasks as subprocess, allowing handling segfault gracefully. ",
+    description="rabbitmq-subprocess-client is a RabbitMQ client (based on `pika`) spawning tasks as subprocess, allowing handling segfault gracefully. ",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/bimdata/rabbitmq-subprocess-client",
