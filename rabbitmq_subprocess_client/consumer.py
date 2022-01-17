@@ -419,14 +419,14 @@ class Consumer:
 
         _thread.start_new_thread(run_thread, ())
 
-    def exec(self, msg, *args):
+    def exec(self, msg, *args, **kwargs):
         with ProcessPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self.__class__.consume_subprocess, msg, *args)
+            future = executor.submit(self.__class__.consume_subprocess, msg, *args, **kwargs)
             next(as_completed([future], timeout=self.timeout)).result()
 
     def consume_main(self, basic_deliver, msg):
         raise NotImplementedError("You must implement this method")
 
     @staticmethod
-    def consume_subprocess(msg, *args):
+    def consume_subprocess(msg, *args, **kwargs):
         raise NotImplementedError("You must implement this method")

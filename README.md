@@ -21,7 +21,8 @@ class MyConsumer(Consumer):
         print(f'pre-processing message: {msg} in process: {os.getpid()}')
         try:
             args = []
-            self.exec(msg, *args)  # This will run the consume_subprocess method in a subprocess
+            kwargs = {}
+            self.exec(msg, *args, **kwargs)  # This will run the consume_subprocess method in a subprocess
             self.acknowledge_message(basic_deliver.delivery_tag)
         except TimeoutError:
             self.nacknowledge_message(basic_deliver.delivery_tag)
@@ -31,10 +32,18 @@ class MyConsumer(Consumer):
             self.nacknowledge_message(basic_deliver.delivery_tag)
 
     @staticmethod
-    def consume_subprocess(msg, *args):
+    def consume_subprocess(msg, *args, **kwargs):
         print(f'processing message: {msg} in process: {os.getpid()}')
 
-worker = Runner('my_queue', MyConsumer)
+worker = Runner(
+    'my_queue', 
+    MyConsumer, 
+    host="127.0.0.1",
+    port="5672",
+    user="guest",
+    password="guest",
+    timeout=None,
+)
 worker.run()
 ```
 
