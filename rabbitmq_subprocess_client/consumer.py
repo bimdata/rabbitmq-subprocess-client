@@ -422,8 +422,10 @@ class Consumer:
 
     def exec(self, msg, *args, **kwargs):
         with ProcessPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self.__class__._consume_subprocess, msg, *args, **kwargs)
-            next(as_completed([future], timeout=self.timeout)).result()
+            future = executor.submit(
+                self._consume_subprocess, self.timeout, msg, *args, **kwargs
+            )
+            next(as_completed([future])).result()
 
     @classmethod
     def _consume_subprocess(cls, time, msg, *args, **kwargs):
