@@ -3,6 +3,7 @@ import functools
 import logging
 from concurrent.futures import as_completed
 from concurrent.futures import ProcessPoolExecutor
+from .utils import timeout
 
 import pika
 
@@ -421,8 +422,15 @@ class Consumer:
 
     def exec(self, msg, *args, **kwargs):
         with ProcessPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self.__class__.consume_subprocess, msg, *args, **kwargs)
-            next(as_completed([future], timeout=self.timeout)).result()
+            future = executor.submit(
+                self._consume_subprocess, self.timeout, msg, *args, **kwargs
+            )
+            next(as_completed([future])).result()
+
+    @classmethod
+    def _consume_subprocess(cls, time, msg, *args, **kwargs):
+        with timeout(time):
+            cls.consume_subprocess(msg, *args, **kwargs)
 
     def consume_main(self, basic_deliver, msg):
         raise NotImplementedError("You must implement this method")
