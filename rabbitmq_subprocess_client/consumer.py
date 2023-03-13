@@ -16,10 +16,6 @@ class Consumer:
     This is the class managing the RabbitMQ
     """
 
-    EXCHANGE = "workers_exchange"
-    DLX_EXCHANGE = "workers_exchange_dlx"
-    EXCHANGE_TYPE = "direct"
-
     def __init__(self, queue_name, host, port, user, password, timeout=None):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
@@ -30,8 +26,7 @@ class Consumer:
         self.should_reconnect = False
         self.was_consuming = False
         self.QUEUE = queue_name
-        self.DLX_QUEUE = self.QUEUE + "_dlx"
-        self.QE_BINDS = {self.QUEUE: self.EXCHANGE, self.DLX_QUEUE: self.DLX_EXCHANGE}
+        self.QE_BINDS = {self.QUEUE: self.EXCHANGE}
         self.ROUTING_KEY = self.QUEUE
         self._connection = None
         self._channel = None
@@ -183,15 +178,8 @@ class Consumer:
         # Note: using functools.partial is not required, it is demonstrating
         # how arbitrary data can be passed to the callback when it is called
         cb = functools.partial(self.on_exchange_declareok, userdata=self.QUEUE)
-        dlx_cb = functools.partial(self.on_exchange_declareok, userdata=self.DLX_QUEUE)
         self._channel.exchange_declare(
             exchange=self.EXCHANGE, exchange_type=self.EXCHANGE_TYPE, callback=cb, durable=True
-        )
-        self._channel.exchange_declare(
-            exchange=self.DLX_EXCHANGE,
-            exchange_type=self.EXCHANGE_TYPE,
-            callback=dlx_cb,
-            durable=True,
         )
 
     def on_exchange_declareok(self, _unused_frame, userdata):
@@ -207,15 +195,12 @@ class Consumer:
         LOGGER.info("Declaring queue %s", userdata)
         cb = functools.partial(self.on_queue_declareok, userdata=userdata)
         queue_name = userdata
-        if queue_name == self.DLX_QUEUE:
-            self._channel.queue_declare(queue=userdata, callback=cb, durable=True)
-        else:
-            self._channel.queue_declare(
-                queue=userdata,
-                callback=cb,
-                durable=True,
-                arguments={"x-dead-letter-exchange": self.DLX_EXCHANGE},
-            )
+        self._channel.queue_declare(
+            queue=userdata,
+            callback=cb,
+            durable=True,
+            arguments={},
+        )
 
     def on_queue_declareok(self, _unused_frame, userdata):
         """Method invoked by pika when the Queue.Declare RPC call made in
@@ -250,8 +235,6 @@ class Consumer:
         """
         LOGGER.info("Queue bound: %s", userdata)
         queue_name = userdata
-        if queue_name == self.DLX_QUEUE:
-            return
         self.set_qos()
 
     def set_qos(self):
