@@ -3,9 +3,10 @@ import functools
 import logging
 from concurrent.futures import as_completed
 from concurrent.futures import ProcessPoolExecutor
-from .utils import timeout
 
 import pika
+
+from .utils import timeout
 
 
 LOGGER = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ class Consumer:
         self.was_consuming = False
         self.QUEUE = queue_name
         self.queue_args = {}
-        if queue_type != None:
+        if queue_type is not None:
             self.queue_args["x-queue-type"] = queue_type
         self._connection = None
         self._channel = None
@@ -147,7 +148,6 @@ class Consumer:
 
         LOGGER.info("Declaring queue %s", self.QUEUE)
         cb = functools.partial(self.on_queue_declareok, userdata=self.QUEUE)
-        queue_name = self.QUEUE
         self._channel.queue_declare(
             queue=self.QUEUE,
             callback=cb,
