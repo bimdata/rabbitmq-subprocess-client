@@ -26,8 +26,6 @@ class Consumer:
         self.should_reconnect = False
         self.was_consuming = False
         self.QUEUE = queue_name
-        self.QE_BINDS = {self.QUEUE: self.EXCHANGE}
-        self.ROUTING_KEY = self.QUEUE
         self._connection = None
         self._channel = None
         self._closing = False
@@ -135,7 +133,7 @@ class Consumer:
         """This method is invoked by pika when the channel has been opened.
         The channel object is passed in so we can make use of it.
 
-        Since the channel is now open, we'll declare the exchange to use.
+        Since the channel is now open, we'll declare the queue to use.
 
         :param pika.channel.Channel channel: The channel object
 
@@ -143,7 +141,16 @@ class Consumer:
         LOGGER.info("Channel opened")
         self._channel = channel
         self.add_on_channel_close_callback()
-        self.setup_exchange()
+
+        LOGGER.info("Declaring queue %s", self.QUEUE)
+        cb = functools.partial(self.on_queue_declareok, userdata=self.QUEUE)
+        queue_name = self.QUEUE
+        self._channel.queue_declare(
+            queue=self.QUEUE,
+            callback=cb,
+            durable=True,
+            arguments={},
+        )
 
     def add_on_channel_close_callback(self):
         """This method tells pika to call the on_channel_closed method if
@@ -167,41 +174,6 @@ class Consumer:
         LOGGER.warning("Channel %i was closed: %s", channel, reason)
         self.close_connection()
 
-    def setup_exchange(self):
-        """Setup the exchange on RabbitMQ by invoking the Exchange.Declare RPC
-        command. When it is complete, the on_exchange_declareok method will
-        be invoked by pika.
-
-        :param str|unicode exchange_name: The name of the exchange to declare
-
-        """
-        # Note: using functools.partial is not required, it is demonstrating
-        # how arbitrary data can be passed to the callback when it is called
-        cb = functools.partial(self.on_exchange_declareok, userdata=self.QUEUE)
-        self._channel.exchange_declare(
-            exchange=self.EXCHANGE, exchange_type=self.EXCHANGE_TYPE, callback=cb, durable=True
-        )
-
-    def on_exchange_declareok(self, _unused_frame, userdata):
-        """Invoked by pika when RabbitMQ has finished the Exchange.Declare RPC
-        command.
-        Setup the queue on RabbitMQ by invoking the Queue.Declare RPC
-        command. When it is complete, the on_queue_declareok method will
-        be invoked by pika.
-
-        :param pika.Frame.Method unused_frame: Exchange.DeclareOk response frame
-        :param str|unicode userdata: Extra user data (exchange name)
-        """
-        LOGGER.info("Declaring queue %s", userdata)
-        cb = functools.partial(self.on_queue_declareok, userdata=userdata)
-        queue_name = userdata
-        self._channel.queue_declare(
-            queue=userdata,
-            callback=cb,
-            durable=True,
-            arguments={},
-        )
-
     def on_queue_declareok(self, _unused_frame, userdata):
         """Method invoked by pika when the Queue.Declare RPC call made in
         setup_queue has completed. In this method we will bind the queue
@@ -213,28 +185,6 @@ class Consumer:
         :param str|unicode userdata: Extra user data (queue name)
 
         """
-        queue_name = userdata
-        LOGGER.info(
-            "Binding %s to %s with key %s",
-            self.QE_BINDS[queue_name],
-            queue_name,
-            self.ROUTING_KEY,
-        )
-        cb = functools.partial(self.on_bindok, userdata=queue_name)
-        self._channel.queue_bind(
-            queue_name, self.QE_BINDS[queue_name], callback=cb, routing_key=self.ROUTING_KEY
-        )
-
-    def on_bindok(self, _unused_frame, userdata):
-        """Invoked by pika when the Queue.Bind method has completed. At this
-        point we will set the prefetch count for the channel.
-
-        :param pika.frame.Method _unused_frame: The Queue.BindOk response frame
-        :param str|unicode userdata: Extra user data (queue name)
-
-        """
-        LOGGER.info("Queue bound: %s", userdata)
-        queue_name = userdata
         self.set_qos()
 
     def set_qos(self):
