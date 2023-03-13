@@ -19,6 +19,7 @@ class Runner:
         user="guest",
         password="guest",
         timeout=None,
+        queue_type=None,
     ):
         self._reconnect_delay = 0
         self.queue_name = queue_name
@@ -27,9 +28,16 @@ class Runner:
         self.user = user
         self.password = password
         self.timeout = timeout
+        self.queue_type = queue_type
         self.consumer_class = consumer_class
         self._consumer = self.consumer_class(
-            self.queue_name, self.host, self.port, self.user, self.password, timeout
+            self.queue_name,
+            self.host,
+            self.port,
+            self.user,
+            self.password,
+            timeout,
+            queue_type,
         )
 
     def run(self):
@@ -53,7 +61,13 @@ class Runner:
             LOGGER.info("Reconnecting after %d seconds", reconnect_delay)
             time.sleep(reconnect_delay)
             self._consumer = self.consumer_class(
-                self.queue_name, self.host, self.port, self.user, self.password, self.timeout
+                self.queue_name,
+                self.host,
+                self.port,
+                self.user,
+                self.password,
+                self.timeout,
+                self.queue_type,
             )
 
     def _get_reconnect_delay(self):

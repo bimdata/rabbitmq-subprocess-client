@@ -14,8 +14,8 @@ pika = "^1.2.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"
-black = "^21.12b0"
-reorder-python-imports = "^2.6.0"
+black = "^22.3.0"
+reorder-python-imports = "^3.9.0"
 pyflakes = "^2.4.0"
 pycodestyle = "^2.8.0"
 pre-commit = "^2.16.0"
