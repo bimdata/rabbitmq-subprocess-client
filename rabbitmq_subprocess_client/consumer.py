@@ -16,7 +16,7 @@ class Consumer:
     This is the class managing the RabbitMQ
     """
 
-    def __init__(self, queue_name, host, port, user, password, timeout=None):
+    def __init__(self, queue_name, host, port, user, password, timeout=None, queue_type=None):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
 
@@ -26,6 +26,9 @@ class Consumer:
         self.should_reconnect = False
         self.was_consuming = False
         self.QUEUE = queue_name
+        self.queue_args = {}
+        if queue_type != None:
+            self.queue_args["x-queue-type"] = queue_type
         self._connection = None
         self._channel = None
         self._closing = False
@@ -149,7 +152,7 @@ class Consumer:
             queue=self.QUEUE,
             callback=cb,
             durable=True,
-            arguments={},
+            arguments=self.queue_args,
         )
 
     def add_on_channel_close_callback(self):
