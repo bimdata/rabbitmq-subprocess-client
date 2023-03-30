@@ -3,6 +3,7 @@ import functools
 import logging
 from concurrent.futures import as_completed
 from concurrent.futures import ProcessPoolExecutor
+from urllib.parse import urlparse
 
 import pika
 
@@ -56,7 +57,8 @@ class Consumer:
         :rtype: pika.SelectConnection
 
         """
-        LOGGER.info("Connecting to %s", self._url.split("@")[-1].split("/")[0])
+        parsed_url = urlparse(self._url)
+        LOGGER.info("Connecting to %s:%s", parsed_url.hostname, parsed_url.port)
         return pika.SelectConnection(
             parameters=pika.URLParameters(self._url),
             on_open_callback=self.on_connection_open,
