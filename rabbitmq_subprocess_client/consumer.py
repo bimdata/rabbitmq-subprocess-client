@@ -56,7 +56,7 @@ class Consumer:
         :rtype: pika.SelectConnection
 
         """
-        LOGGER.info("Connecting to %s", self._url)
+        LOGGER.info("Connecting to %s", self._url.split("@")[-1].split("/")[0])
         return pika.SelectConnection(
             parameters=pika.URLParameters(self._url),
             on_open_callback=self.on_connection_open,
