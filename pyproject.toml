@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rabbitmq-subprocess-client"
-version = "1.0.0"
+version = "1.0.1"
 description = "rabbitmq-subprocess-client is a RabbitMQ client (based on `pika`) spawning tasks as subprocess, allowing handling segfault gracefully."
 authors = ["amoki <hugo@bimdata.io>"]
 license = "MIT"
